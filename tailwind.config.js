@@ -16,14 +16,14 @@ module.exports = {
         center:true
       },
       backgroundColor:{
-        'dark':'#393646',
-        'primary':"#F4EEE0",
-        'secondary':"#6D5D6E"
+        'dark':'#1b191b',
+        'primary':"#121113",
+        'secondary':"#3a383e"
       },
       colors:{
-        'dark':'#393646',
-        'primary':"#F4EEE0",
-        'secondary':"#6D5D6E"
+        'dark':'#1b191b',
+        'primary':"#121113",
+        'secondary':"#3a383e"
       }
     },
   },
