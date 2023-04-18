@@ -3,7 +3,7 @@ import { Inter } from "next/font/google";
 import { CurrencyInput } from "@/components/CurrencyInput";
 import { useState } from "react";
 import { Input } from "@/components/Input";
-import { CgMathPercent,CgMathPlus } from "react-icons/cg";
+import { CgMathPercent, CgMathPlus } from "react-icons/cg";
 import { currencyFormat } from "@/utils/currencyFormater";
 import { ResultCard } from "@/components/ResultCard";
 
@@ -35,7 +35,7 @@ export default function Home() {
   function handleInputChange({ name, value }: { name: string; value: string }) {
     setValues((prevInputValues) => ({
       ...prevInputValues,
-      [name]:parseFloat(value) > 0 ? parseFloat(value) : 0,
+      [name]: parseFloat(value) > 0 ? parseFloat(value) : 0,
     }));
   }
 
@@ -76,24 +76,42 @@ export default function Home() {
   }
 
   function calculateProfit(inputValues: InputValuesTypes): number {
-    const { product_price, shipping, checkout, charge_back, taxes, marketing, gateway, markup } = inputValues;
-  
-    // converte as taxas e despesas em valores monetários
-    const checkoutFee = checkout !== 0 ? (product_price * checkout) / 100 : 0;
-    const chargeBackFee = charge_back !== 0 ? (product_price * charge_back) / 100 : 0;
-    const taxesValue = taxes !== 0 ? (product_price * taxes) / 100 : 0;
-    const marketingFee = marketing !== 0 ? product_price * (marketing / 100) : 0;
-    const gatewayFee = gateway !== 0 ? (product_price * gateway) / 100 : 0;
-  
-    // calcula o custo total das taxas e despesas
-    const totalFees = shipping + checkoutFee + chargeBackFee + taxesValue + marketingFee + gatewayFee;
-  
+    const {
+      product_price,
+      shipping,
+      checkout,
+      charge_back,
+      taxes,
+      marketing,
+      gateway,
+      markup,
+    } = inputValues;
+
     // calcula o preço final do produto com base nas taxas, despesas e markup
-    const totalPrice = product_price * markup
-  
+    const totalPrice = product_price * markup;
+
+    // converte as taxas e despesas em valores monetários
+    const checkoutFee = checkout !== 0 ? totalPrice * (checkout / 100) : 0;
+    const chargeBackFee =
+      charge_back !== 0 ? totalPrice * (charge_back / 100) : 0;
+    const taxesValue = taxes !== 0 ? totalPrice * (taxes / 100) : 0;
+    const marketingFee =
+      marketing !== 0 ? totalPrice * (marketing / 100) : 0;
+    const gatewayFee = gateway !== 0 ? totalPrice * (gateway / 100) : 0;
+
+    // calcula o custo total das taxas e despesas
+    const totalFees =
+      shipping +
+      checkoutFee +
+      chargeBackFee +
+      taxesValue +
+      marketingFee +
+      gatewayFee;
+
     // calcula o lucro por cada venda
-    const profit = totalPrice - totalPrice * (totalFees * totalFees / 100) - product_price
-    console.log(marketingFee)
+    const profit =
+      totalPrice - totalFees - product_price;
+    console.log(marketingFee);
     return profit;
   }
 
@@ -154,7 +172,7 @@ export default function Home() {
               label="Frete"
               id="shipping"
               name="shipping"
-              value={values.shipping+''}
+              value={values.shipping + ""}
               onChange={(value, name) =>
                 handleInputChange({ value, name } as {
                   value: string;
@@ -283,7 +301,7 @@ export default function Home() {
 
             <ResultCard
               title="Preço de venda"
-              value={calculateTotalCost(values)}
+              value={values.product_price * values.markup}
               tooltipId="selling_price"
               tooltipMessage="Este será o preço final do seu produto"
             />
