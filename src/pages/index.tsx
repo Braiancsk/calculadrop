@@ -35,47 +35,24 @@ export default function Home() {
   function handleInputChange({ name, value }: { name: string; value: string }) {
     setValues((prevInputValues) => ({
       ...prevInputValues,
-      [name]: parseFloat(value) > 0 ? parseFloat(value) : 0,
+      [name]:typeof value === 'number' ? parseFloat(value) : value?.replace(',','.'),
     }));
   }
 
   function calculateTotalCost(inputValues: InputValuesTypes): number {
     const {
       product_price,
-      shipping,
-      checkout,
-      charge_back,
-      taxes,
-      marketing,
-      gateway,
       markup,
     } = inputValues;
 
-    // converte as taxas e despesas em valores monetários
-    const checkoutFee = checkout !== 0 ? (product_price * checkout) / 100 : 0;
-    const chargeBackFee =
-      charge_back !== 0 ? (product_price * charge_back) / 100 : 0;
-    const taxesValue = taxes !== 0 ? (product_price * taxes) / 100 : 0;
-    const marketingFee =
-      marketing !== 0 ? (product_price * marketing) / 100 : 0;
-    const gatewayFee = gateway !== 0 ? (product_price * gateway) / 100 : 0;
-
-    // calcula o custo total das taxas e despesas
-    const totalFees =
-      shipping +
-      checkoutFee +
-      chargeBackFee +
-      taxesValue +
-      marketingFee +
-      gatewayFee;
 
     // calcula o preço final do produto com base nas taxas, despesas e markup
-    const totalPrice = (product_price + totalFees) * markup;
+    const totalPrice = +product_price * markup
 
     return totalPrice;
   }
 
-  function calculateProfit(inputValues: InputValuesTypes): number {
+  function calculateProfit(): number {
     const {
       product_price,
       shipping,
@@ -85,7 +62,7 @@ export default function Home() {
       marketing,
       gateway,
       markup,
-    } = inputValues;
+    } = values;
 
     // calcula o preço final do produto com base nas taxas, despesas e markup
     const totalPrice = product_price * markup;
@@ -101,19 +78,47 @@ export default function Home() {
 
     // calcula o custo total das taxas e despesas
     const totalFees =
-      shipping +
-      checkoutFee +
-      chargeBackFee +
-      taxesValue +
-      marketingFee +
-      gatewayFee;
+      +shipping +
+      +checkoutFee +
+      +chargeBackFee +
+      +taxesValue +
+      +marketingFee +
+      +gatewayFee;
 
+      console.log(totalFees)
     // calcula o lucro por cada venda
     const profit =
-      totalPrice - totalFees - product_price;
-    console.log(marketingFee);
+      totalPrice - product_price - totalFees
     return profit;
   }
+
+  function profitPercentage(){
+    const totalPrice = calculateTotalCost(values)
+    const profit = calculateProfit()
+
+    const profitMargin = (profit / totalPrice) * 100;
+    // arredonda o resultado para no máximo 2 casas decimais
+    const profitMarginRounded = Number(profitMargin.toFixed(2));
+
+    if(profitMarginRounded === -Infinity) return 0
+    return profitMarginRounded;
+  
+  }
+
+  function calculateBreakEven(){
+    const profitMargin = calculateProfit()
+    const {marketing} = values
+    const marketingCost = profitMargin * (+marketing / 100) 
+
+    const breakeven = marketingCost + profitMargin
+    return breakeven
+  }
+
+  function calculateCPC(){
+
+  }
+
+
 
   return (
     <main className="bg-primary min-h-screen">
@@ -154,7 +159,7 @@ export default function Home() {
               label="Markup"
               id="markup"
               name="markup"
-              type="number"
+              type="text"
               placeholder="Ex: 2.5"
               onChange={({ target }) =>
                 handleInputChange({ value: target.value, name: target.name })
@@ -185,7 +190,7 @@ export default function Home() {
               label="Marketing/Ads"
               id="marketing"
               name="marketing"
-              type="number"
+              type="text"
               placeholder="Ex: 33"
               value={values.marketing + ""}
               onChange={({ target }) =>
@@ -206,7 +211,7 @@ export default function Home() {
               label="Imposto"
               id="taxes"
               name="taxes"
-              type="number"
+              type="text"
               placeholder="Ex: 6"
               value={values.taxes + ""}
               onChange={({ target }) =>
@@ -224,7 +229,7 @@ export default function Home() {
               label="Gateway"
               id="gateway"
               name="gateway"
-              type="number"
+              type="text"
               placeholder="Ex: 2.5"
               value={values.gateway + ""}
               onChange={({ target }) =>
@@ -243,7 +248,7 @@ export default function Home() {
               label="Checkout"
               id="checkout"
               name="checkout"
-              type="number"
+              type="text"
               value={values.checkout + ""}
               placeholder="Ex: 2.5"
               onChange={({ target }) =>
@@ -262,7 +267,7 @@ export default function Home() {
               label="Charge back"
               id="charge_back"
               name="charge_back"
-              type="number"
+              type="text"
               placeholder="Ex: 3"
               value={values.charge_back + ""}
               onChange={({ target }) =>
@@ -301,14 +306,14 @@ export default function Home() {
 
             <ResultCard
               title="Preço de venda"
-              value={values.product_price * values.markup}
+              value={calculateTotalCost(values)}
               tooltipId="selling_price"
               tooltipMessage="Este será o preço final do seu produto"
             />
 
             <ResultCard
               title="Porcentagem de lucro"
-              value={values.product_price}
+              value={profitPercentage()}
               type="suffix"
               suffix="%"
               tooltipId="percentage_profit"
@@ -317,16 +322,14 @@ export default function Home() {
 
             <ResultCard
               title="Lucro por venda"
-              value={calculateProfit(values)}
+              value={calculateProfit()}
               tooltipId="profit_sell"
               tooltipMessage="Lucro para cada venda realizada do produto"
             />
 
             <ResultCard
               title="Breakeven"
-              value={values.product_price}
-              type="suffix"
-              suffix="%"
+              value={calculateProfit()}
               tooltipId="breakeven"
               tooltipMessage="Esse é o valor máximo que você pode gastar para fazer uma venda. Aonde não vai ter lucro e nem prejuízo, ou seja, 0 a 0"
             />
@@ -336,13 +339,13 @@ export default function Home() {
         <section className="container p-7">
           <h1 className="text-white text-2xl mb-10">Métricas ideias</h1>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-5">
-            <ResultCard
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-2 gap-5">
+            {/* <ResultCard
               title="CPM ideal"
               value={7}
               tooltipId="ideal_cpm"
               tooltipMessage="Esse é o CPM ideal para sua campanha com base no Markup. Levando em consideração que sua taxa de conversão vai ser de 1% do total de pessoas que entraram em sua página de destino"
-            />
+            /> */}
 
             <ResultCard
               title="CPC ideal"
