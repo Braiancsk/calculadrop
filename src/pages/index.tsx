@@ -18,6 +18,7 @@ interface InputValuesTypes {
   marketing: number;
   gateway: number;
   markup: number;
+  profit_meta:number;
 }
 
 export default function Home() {
@@ -30,24 +31,24 @@ export default function Home() {
     marketing: 0,
     gateway: 0,
     markup: 0,
+    profit_meta:0
   });
 
   function handleInputChange({ name, value }: { name: string; value: string }) {
     setValues((prevInputValues) => ({
       ...prevInputValues,
-      [name]:typeof value === 'number' ? parseFloat(value) : value?.replace(',','.'),
+      [name]:
+        typeof value === "number"
+          ? parseFloat(value)
+          : value?.replace(",", "."),
     }));
   }
 
-  function calculateTotalCost(inputValues: InputValuesTypes): number {
-    const {
-      product_price,
-      markup,
-    } = inputValues;
-
+  function calculateTotalCost(): number {
+    const { product_price, markup } = values;
 
     // calcula o preço final do produto com base nas taxas, despesas e markup
-    const totalPrice = +product_price * markup
+    const totalPrice = +product_price * markup;
 
     return totalPrice;
   }
@@ -72,8 +73,7 @@ export default function Home() {
     const chargeBackFee =
       charge_back !== 0 ? totalPrice * (charge_back / 100) : 0;
     const taxesValue = taxes !== 0 ? totalPrice * (taxes / 100) : 0;
-    const marketingFee =
-      marketing !== 0 ? totalPrice * (marketing / 100) : 0;
+    const marketingFee = marketing !== 0 ? totalPrice * (marketing / 100) : 0;
     const gatewayFee = gateway !== 0 ? totalPrice * (gateway / 100) : 0;
 
     // calcula o custo total das taxas e despesas
@@ -85,40 +85,102 @@ export default function Home() {
       +marketingFee +
       +gatewayFee;
 
-      console.log(totalFees)
+    // console.log(totalFees);
     // calcula o lucro por cada venda
-    const profit =
-      totalPrice - product_price - totalFees
+    const profit = totalPrice - product_price - totalFees;
     return profit;
   }
 
-  function profitPercentage(){
-    const totalPrice = calculateTotalCost(values)
-    const profit = calculateProfit()
+  function profitPercentage() {
+    const totalPrice = calculateTotalCost();
+    const profit = calculateProfit();
 
     const profitMargin = (profit / totalPrice) * 100;
     // arredonda o resultado para no máximo 2 casas decimais
     const profitMarginRounded = Number(profitMargin.toFixed(2));
 
-    if(profitMarginRounded === -Infinity) return 0
+    if (profitMarginRounded === -Infinity) return 0;
     return profitMarginRounded;
-  
   }
 
-  function calculateBreakEven(){
-    const profitMargin = calculateProfit()
+  function calculateBreakEven() {
+    const profitMargin = calculateProfit();
+    const {
+      product_price,
+      shipping,
+      checkout,
+      charge_back,
+      taxes,
+      marketing,
+      gateway,
+      markup,
+    } = values;
+
+    // calcula o preço final do produto com base nas taxas, despesas e markup
+    const totalPrice = product_price * markup;
+
+    // converte as taxas e despesas em valores monetários
+    const checkoutFee = checkout !== 0 ? totalPrice * (checkout / 100) : 0;
+    const chargeBackFee =
+      charge_back !== 0 ? totalPrice * (charge_back / 100) : 0;
+    const taxesValue = taxes !== 0 ? totalPrice * (taxes / 100) : 0;
+    const marketingFee = marketing !== 0 ? totalPrice * (marketing / 100) : 0;
+    const gatewayFee = gateway !== 0 ? totalPrice * (gateway / 100) : 0;
+
+    // calcula o custo total das taxas e despesas
+    const totalFees =
+      +shipping +
+      +checkoutFee +
+      +chargeBackFee +
+      +taxesValue +
+      +marketingFee +
+      +gatewayFee;
+
+    // console.log(totalFees);
+    const breakeven = totalFees + profitMargin;
+    return breakeven;
+  }
+
+  function calculatePageView() {
+    const profitMargin = calculateProfit();
+    const halfProfitMargin = profitMargin / 2;
+    const idealPageView = halfProfitMargin / 100;
+    return idealPageView;
+  }
+
+  function calculateCPA() {
+    const pageViewCost = calculatePageView()
+    const pageViewFee = pageViewCost * 100
+    return pageViewFee
+  }
+
+  function calculateEstimatedSales(profit_meta_days:number){
+    const {profit_meta} = values
+    const productSellCost = calculateTotalCost()
+    const profit = calculateProfit()
+      // calcula o número de vendas diárias necessárias para atingir a meta de faturamento
+    const dailySales = profit_meta / profit;
+    const dailySellsTotal = dailySales * productSellCost / profit_meta_days
+    console.log(dailySales)
+
+    return dailySellsTotal
+  }
+
+  function calculateMarketingCost(profit_meta_days:number): number {
     const {marketing} = values
-    const marketingCost = profitMargin * (+marketing / 100) 
 
-    const breakeven = marketingCost + profitMargin
-    return breakeven
+
+    const profit = calculateProfit()
+      // calcula o número de vendas diárias necessárias para atingir a meta de faturamento
+      const estimatedSalesProfit = calculateEstimatedSales(profit_meta_days)
+      
+      // calcula o custo diário de marketing
+        const marketingCost = estimatedSalesProfit * (marketing / 100)
+
+        return marketingCost;
+
+     
   }
-
-  function calculateCPC(){
-
-  }
-
-
 
   return (
     <main className="bg-primary min-h-screen">
@@ -306,7 +368,7 @@ export default function Home() {
 
             <ResultCard
               title="Preço de venda"
-              value={calculateTotalCost(values)}
+              value={calculateTotalCost()}
               tooltipId="selling_price"
               tooltipMessage="Este será o preço final do seu produto"
             />
@@ -329,7 +391,7 @@ export default function Home() {
 
             <ResultCard
               title="Breakeven"
-              value={calculateProfit()}
+              value={calculateBreakEven()}
               tooltipId="breakeven"
               tooltipMessage="Esse é o valor máximo que você pode gastar para fazer uma venda. Aonde não vai ter lucro e nem prejuízo, ou seja, 0 a 0"
             />
@@ -348,17 +410,17 @@ export default function Home() {
             /> */}
 
             <ResultCard
-              title="CPC ideal"
-              value={2.8}
-              tooltipId="ideal_cpc"
-              tooltipMessage="Esse é o CPC ideal para sua campanha com base no Markup. Levando em consideração que sua taxa de conversão vai ser de 1% do total de pessoas que entraram em sua página de destino"
+              title="PageView ideal"
+              value={calculatePageView()}
+              tooltipId="ideal_pageView"
+              tooltipMessage="Esse é o PageView(Visualização de página de destino) ideal para sua campanha com base no Markup. Levando em consideração que sua taxa de conversão vai ser de 1% do total de pessoas que entraram em sua página de destino"
             />
 
             <ResultCard
-              title="CPA ideal"
-              value={0.33}
+              title="CPA médio esperado"
+              value={calculateCPA()}
               tooltipId="ideal_cpa"
-              tooltipMessage="Esse é o CPA ideal para sua campanha com base no Markup"
+              tooltipMessage="Esse será o CPA médio esperado com base no seu PageView. Levando em consideração uma taxa de conversão de 1% do total de pessoas que entraram na sua página de destino"
             />
           </div>
         </section>
@@ -369,8 +431,8 @@ export default function Home() {
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3">
             <CurrencyInput
               label="Quanto você deseja lucrar?"
-              id="product-price"
-              name="product_price"
+              id="profit-meta"
+              name="profit_meta"
               onChange={(value, name) =>
                 handleInputChange({ value, name } as {
                   value: string;
@@ -383,37 +445,37 @@ export default function Home() {
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-5 mt-7">
             <ResultCard
               title="Vendas diarias"
-              value={0.33}
+              value={calculateEstimatedSales(30)}
               tooltipId="daily_sales"
               tooltipMessage="Essa é a quantidade de vendas diárias que você vai precisar fazer para alcançar a sua meta"
             />
             <ResultCard
               title="Vendas semanais"
-              value={0.33}
+              value={calculateEstimatedSales(4)}
               tooltipId="weekly_sales"
               tooltipMessage="Essa é a quantidade de vendas semanais que você vai precisar fazer para alcançar a sua meta"
             />
             <ResultCard
               title="Vendas mensais"
-              value={0.33}
+              value={calculateEstimatedSales(1)}
               tooltipId="weekly_sales"
               tooltipMessage="Essa é a quantidade de vendas mensais que você vai precisar fazer para alcançar a sua meta"
             />
             <ResultCard
               title="Marketing diário"
-              value={0.33}
+              value={calculateMarketingCost(30)}
               tooltipId="daily_marketing"
               tooltipMessage="Você vai precisar gastar esse valor diariamente em marketing para conseguir alcançar sua meta"
             />
             <ResultCard
               title="Marketing semanal"
-              value={0.33}
+              value={calculateMarketingCost(4)}
               tooltipId="weekly_marketing"
               tooltipMessage="Você vai precisar gastar esse valor semanalmente em marketing para conseguir alcançar sua meta"
             />
             <ResultCard
               title="Marketing mensal"
-              value={0.33}
+              value={calculateMarketingCost(1)}
               tooltipId="monthly_marketing"
               tooltipMessage="Você vai precisar gastar esse valor mensalmente em marketing para conseguir alcançar sua meta"
             />
