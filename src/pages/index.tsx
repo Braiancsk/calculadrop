@@ -183,7 +183,7 @@ export default function Home() {
   }
 
   return (
-    <main className="bg-primary min-h-screen">
+    <main className="bg-primary min-h-screen py-5">
       <header className="py-6">
         <h1 className="text-white text-3xl text-center">
           Calcula<b>Drop</b>
@@ -194,7 +194,7 @@ export default function Home() {
         <h1 className="text-3xl">
           Calcule seu ganho estimado na sua operação de Dropshipping
         </h1>
-        <p>
+        <p className="mt-3">
           Faça uma estimativa rápida do quanto você pode ganhar com um produto.
           Explorando diferentes tipos de cenários e variáveis
         </p>
