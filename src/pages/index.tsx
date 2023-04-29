@@ -35,13 +35,25 @@ export default function Home() {
   });
 
   function handleInputChange({ name, value }: { name: string; value: string }) {
-    setValues((prevInputValues) => ({
-      ...prevInputValues,
-      [name]:
-        typeof value === "number"
-          ? parseFloat(value)
-          : value?.replace(",", "."),
-    }));
+    console.log(value)
+    setValues((prevInputValues) => {
+      if(!value && typeof value === 'string'){
+        return{
+          ...prevInputValues,
+          [name]:0
+        }
+      }
+
+      return {
+          ...prevInputValues,
+          [name]:
+            typeof value === "number"
+              ? parseFloat(value)
+              : value?.replace(",", "."),
+        }
+      
+
+    })
   }
 
   function calculateTotalCost(): number {
@@ -73,19 +85,20 @@ export default function Home() {
     const chargeBackFee =
       charge_back !== 0 ? totalPrice * (charge_back / 100) : 0;
     const taxesValue = taxes !== 0 ? totalPrice * (taxes / 100) : 0;
-    const marketingFee = marketing !== 0 ? totalPrice * (marketing / 100) : 0;
     const gatewayFee = gateway !== 0 ? totalPrice * (gateway / 100) : 0;
+    const shippingFee = shipping ? +shipping : 0
+    const marketingFee = marketing ? +marketing : 0
 
     // calcula o custo total das taxas e despesas
     const totalFees =
-      +shipping +
+      shippingFee +
+      +marketingFee +
       +checkoutFee +
       +chargeBackFee +
       +taxesValue +
-      +marketingFee +
       +gatewayFee;
 
-    // console.log(totalFees);
+  
     // calcula o lucro por cada venda
     const profit = totalPrice - product_price - totalFees;
     return profit;
@@ -124,20 +137,21 @@ export default function Home() {
     const chargeBackFee =
       charge_back !== 0 ? totalPrice * (charge_back / 100) : 0;
     const taxesValue = taxes !== 0 ? totalPrice * (taxes / 100) : 0;
-    const marketingFee = marketing !== 0 ? totalPrice * (marketing / 100) : 0;
     const gatewayFee = gateway !== 0 ? totalPrice * (gateway / 100) : 0;
+    const marketingFee = marketing ? +marketing : 0
+    const shippingFee = shipping ? +shipping : 0
 
     // calcula o custo total das taxas e despesas
     const totalFees =
-      +shipping +
+    shippingFee +
+      marketingFee +
       +checkoutFee +
       +chargeBackFee +
       +taxesValue +
-      +marketingFee +
       +gatewayFee;
 
-    // console.log(totalFees);
-    const breakeven = totalFees + profitMargin;
+    console.log(totalFees);
+    const breakeven = totalFees + profitMargin - shippingFee
     return breakeven;
   }
 
@@ -164,6 +178,16 @@ export default function Home() {
     console.log(dailySales)
 
     return dailySellsTotal
+  }
+
+  function calculateSellsQuantity(profit_meta_days:number){
+    const {profit_meta} = values
+    const productSellCost = calculateTotalCost()
+    const profit = calculateProfit()
+      // calcula o número de vendas diárias necessárias para atingir a meta de faturamento
+      const dailySales = profit_meta / profit / profit_meta_days
+      console.log(dailySales)
+    return Math.round(dailySales)
   }
 
   function calculateMarketingCost(profit_meta_days:number): number {
@@ -206,7 +230,7 @@ export default function Home() {
 
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mt-10">
             <CurrencyInput
-              label="Preço do produto"
+              label="Custo do produto"
               id="product-price"
               name="product_price"
               onChange={(value, name) =>
@@ -239,7 +263,6 @@ export default function Home() {
               label="Frete"
               id="shipping"
               name="shipping"
-              value={values.shipping + ""}
               onChange={(value, name) =>
                 handleInputChange({ value, name } as {
                   value: string;
@@ -248,22 +271,15 @@ export default function Home() {
               }
             />
 
-            <Input
-              label="Marketing/Ads"
+          <CurrencyInput
+              label="CPA"
               id="marketing"
               name="marketing"
-              type="text"
-              placeholder="Ex: 33"
-              value={values.marketing + ""}
-              onChange={({ target }) =>
-                handleInputChange({ value: target.value, name: target.name })
-              }
-              adornment={
-                <CgMathPercent
-                  className="absolute right-2 top-[11px]"
-                  size={25}
-                  color="#393646"
-                />
+              onChange={(value, name) =>
+                handleInputChange({ value, name } as {
+                  value: string;
+                  name: string;
+                })
               }
             />
           </div>
@@ -275,7 +291,6 @@ export default function Home() {
               name="taxes"
               type="text"
               placeholder="Ex: 6"
-              value={values.taxes + ""}
               onChange={({ target }) =>
                 handleInputChange({ value: target.value, name: target.name })
               }
@@ -293,7 +308,7 @@ export default function Home() {
               name="gateway"
               type="text"
               placeholder="Ex: 2.5"
-              value={values.gateway + ""}
+          
               onChange={({ target }) =>
                 handleInputChange({ value: target.value, name: target.name })
               }
@@ -311,7 +326,7 @@ export default function Home() {
               id="checkout"
               name="checkout"
               type="text"
-              value={values.checkout + ""}
+          
               placeholder="Ex: 2.5"
               onChange={({ target }) =>
                 handleInputChange({ value: target.value, name: target.name })
@@ -331,7 +346,7 @@ export default function Home() {
               name="charge_back"
               type="text"
               placeholder="Ex: 3"
-              value={values.charge_back + ""}
+         
               onChange={({ target }) =>
                 handleInputChange({ value: target.value, name: target.name })
               }
@@ -398,32 +413,7 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="container p-7">
-          <h1 className="text-white text-2xl mb-10">Métricas ideias</h1>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-2 gap-5">
-            {/* <ResultCard
-              title="CPM ideal"
-              value={7}
-              tooltipId="ideal_cpm"
-              tooltipMessage="Esse é o CPM ideal para sua campanha com base no Markup. Levando em consideração que sua taxa de conversão vai ser de 1% do total de pessoas que entraram em sua página de destino"
-            /> */}
-
-            <ResultCard
-              title="PageView ideal"
-              value={calculatePageView()}
-              tooltipId="ideal_pageView"
-              tooltipMessage="Esse é o PageView(Visualização de página de destino) ideal para sua campanha com base no Markup. Levando em consideração que sua taxa de conversão vai ser de 1% do total de pessoas que entraram em sua página de destino"
-            />
-
-            <ResultCard
-              title="CPA médio esperado"
-              value={calculateCPA()}
-              tooltipId="ideal_cpa"
-              tooltipMessage="Esse será o CPA médio esperado com base no seu PageView. Levando em consideração uma taxa de conversão de 1% do total de pessoas que entraram na sua página de destino"
-            />
-          </div>
-        </section>
+     
 
         <section className="container p-7">
           <h1 className="text-white text-2xl mb-10">Meta de lucro</h1>
@@ -462,16 +452,19 @@ export default function Home() {
               tooltipMessage="Essa é a quantidade de vendas mensais que você vai precisar fazer para alcançar a sua meta"
             />
             <ResultCard
+              title="Quantidade de vendas"
+              value={calculateSellsQuantity(1)}
+              type="suffix"
+              suffix=" vendas"
+              tooltipId="daily_marketing"
+              tooltipMessage="Essa é a quantidade de vendas totais que você vai precisar realizar"
+            />
+        
+        <ResultCard
               title="Marketing diário"
               value={calculateMarketingCost(30)}
               tooltipId="daily_marketing"
               tooltipMessage="Você vai precisar gastar esse valor diariamente em marketing para conseguir alcançar sua meta"
-            />
-            <ResultCard
-              title="Marketing semanal"
-              value={calculateMarketingCost(4)}
-              tooltipId="weekly_marketing"
-              tooltipMessage="Você vai precisar gastar esse valor semanalmente em marketing para conseguir alcançar sua meta"
             />
             <ResultCard
               title="Marketing mensal"
