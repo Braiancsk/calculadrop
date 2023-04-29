@@ -231,6 +231,8 @@ export default function Home() {
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mt-10">
             <CurrencyInput
               label="Custo do produto"
+              tooltipId="product_price_input"
+              tooltipMessage="Esse é o preço pelo qual você vai comprar o produto no seu fornecedor"
               id="product-price"
               name="product_price"
               onChange={(value, name) =>
@@ -263,6 +265,8 @@ export default function Home() {
               label="Frete"
               id="shipping"
               name="shipping"
+              tooltipId="shipping"
+              tooltipMessage="Esse é o preço do frete do produto. É sempre aconselhável inserir o custo do produto junto com o frete. Assim você consegue entender melhor o cálculo geral"
               onChange={(value, name) =>
                 handleInputChange({ value, name } as {
                   value: string;
@@ -275,6 +279,8 @@ export default function Home() {
               label="CPA"
               id="marketing"
               name="marketing"
+              tooltipId="shipping"
+              tooltipMessage="Esse é o custo que você está tendo para fazer uma venda. Ele será usado para calcular o seu lucro final"
               onChange={(value, name) =>
                 handleInputChange({ value, name } as {
                   value: string;
@@ -369,7 +375,7 @@ export default function Home() {
               title="Custo do produto"
               value={values.product_price}
               tooltipId="product_price"
-              tooltipMessage="Esse é o preço pelo qual você vai comprar o seu produto no seu fornecedor"
+              tooltipMessage="Esse é o preço pelo qual você vai comprar o produto no seu fornecedor"
             />
 
             <ResultCard
@@ -423,6 +429,8 @@ export default function Home() {
               label="Quanto você deseja lucrar?"
               id="profit-meta"
               name="profit_meta"
+              tooltipId="profit_meta"
+              tooltipMessage="Esse é o seu objetivo de lucro. Já descontando todas as taxas e custos"
               onChange={(value, name) =>
                 handleInputChange({ value, name } as {
                   value: string;

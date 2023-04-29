@@ -7,4 +7,6 @@ export type CurrencyInputProps = {
     onChange:(value: string | undefined, name: string  | undefined, values?: CurrencyInputOnChangeValues | undefined) => void
     name:string
     id:string
+    tooltipId:string
+    tooltipMessage:string
 }
